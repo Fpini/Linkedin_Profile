@@ -88,7 +88,14 @@ def max_conn_prog_glb(conn_prog_glb):
 def create_comp_subset(context_data, n):
     conn = get_duckdb_connection()
     sql_str= f'''SELECT Company, count(*) as compcount FROM context_data where NOT Company is NULL group by Company order by compcount desc LIMIT {n}'''
-    return conn.sql(sql_str).df()
+    df = conn.sql(sql_str).df()
+    sql_str =  f'''SELECT AVG(compcount) as average, STDDEV(compcount) as deviation FROM df'''
+    df_metriche = conn.sql(sql_str).df()
+    df['diff'] = df['compcount'] - df_metriche['average'][0]
+    df['compcountnorm'] = ((df['diff'] / df_metriche['deviation'][0]).round(0))
+    df['compcountnorm'] = df['compcountnorm'] * 5
+    df['compcountnorm'] = df['compcountnorm'].astype(int)
+    return df
 
 
 def visualizza_grafo(context_data):
@@ -176,7 +183,8 @@ def visualizza_grafo(context_data):
             )
         )
         # Mostra il grafico
-        fig.show()
+#        fig.show()
+        st.plotly_chart(fig, use_container_width=True)
 
 
 def crea_grafo(context_data):
@@ -188,7 +196,7 @@ def crea_grafo(context_data):
     #     lambda row: cripta(nominativo(row))[:10] if cripta_dati else nominativo(row)[:10], axis=1
     # )
     G.add_node('Me')
-    G.nodes['Me']['weight'] = 10
+    G.nodes['Me']['weight'] = 5
 
     for _, row_ord in context_data.iterrows():
         company = row_ord['Company']
@@ -196,7 +204,7 @@ def crea_grafo(context_data):
             if company not in G.nodes:
                 G.add_node(company)
                 G.add_edge('Me', company)
-                G.nodes[company]['weight'] = row_ord['compcount']
+                G.nodes[company]['weight'] = row_ord['compcountnorm']
     return G
 
 

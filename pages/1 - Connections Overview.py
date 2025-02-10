@@ -13,11 +13,15 @@ st.title("Linkedin Connections Overview")
 
 if "context_data" in st.session_state:
     context_data = st.session_state["context_data"]
-#    st.write(context_data)
+#
+#  Total connections' number
+#     
     conn_prog_glb = connections_progression_global(context_data)
     total_connections = max_conn_prog_glb(conn_prog_glb)
     st.header(f'Total number of connections: {total_connections}')
-
+#
+#  Global period connections' trend
+#     
     conn_prog_glb["year_month"] = conn_prog_glb["year"].astype(str) + "-" + conn_prog_glb["month"].astype(str).str.zfill(2)
     # Creazione del grafico con Plotly
     fig = px.line(conn_prog_glb, x=conn_prog_glb.year_month, y="cumulative_count", title="Global Cumulative Progression")
@@ -25,7 +29,9 @@ if "context_data" in st.session_state:
     fig.update_layout(modebar_add=["resetScale2d"])
     # Mostra il grafico in Streamlit
     st.plotly_chart(fig)
-
+#
+#  Monthly connections' growth
+#     
     conn_prog = connections_progression(context_data)
     conn_prog["year_month"] = conn_prog["year"].astype(str) + "-" + conn_prog["month"].astype(str).str.zfill(2)
     # Creazione del grafico con colori personalizzati
@@ -35,7 +41,6 @@ if "context_data" in st.session_state:
                 title="📊 Monthly Connections", 
                 color="year_month",  # Cambia colore per ogni barra
                 text_auto=True)  # Mostra i valori sopra le barre
-
     # Personalizzazione del layout
     fig.update_layout(
         xaxis_title="year_month",
@@ -47,7 +52,9 @@ if "context_data" in st.session_state:
     )
     # Mostra il grafico
     st.plotly_chart(fig)
-
+#
+#  Most connected Companies  
+#
     company_count = company_count(context_data)
     st.header(f'Total number of connections companies: {company_count}')
 #    value_comp = st.slider("Choose a value", min_value=1, max_value=company_count, value=10)
@@ -71,10 +78,13 @@ if "context_data" in st.session_state:
     )
     # Mostra il grafico
     st.plotly_chart(fig)
+#
+#  Most popular connection's Positions  
+#
 
     position_count = position_count(context_data)
     st.header(f'Total number of connections positions: {position_count}')
-#    value_pos = st.slider("Choose a value", min_value=1, max_value=position_count, value=10)
+
     conn_per_pos = connections_per_position(context_data)
     # Creazione del grafico con colori personalizzati
     fig = px.bar(conn_per_pos, 
@@ -95,8 +105,6 @@ if "context_data" in st.session_state:
     )
     # Mostra il grafico
     st.plotly_chart(fig)
-
-
 
 else:
     st.warning("Carica un file nella pagina Home per accedere a questa sezione.")
