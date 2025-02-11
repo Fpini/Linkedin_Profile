@@ -50,20 +50,24 @@ def connections_per_position(context_data):
     return df
 
 def connections_progression(context_data):
-    conn = get_duckdb_connection()
-    sql_str = '''SELECT 
-                    YEAR(STRPTIME("Connected On", '%d %b %Y')) AS year, 
-                    MONTH(STRPTIME("Connected On", '%d %b %Y')) AS month, 
-                    COUNT(*) AS monthly_count,
-                    SUM(COUNT(*)) OVER (
-                        PARTITION BY YEAR(STRPTIME("Connected On", '%d %b %Y')) 
-                        ORDER BY MONTH(STRPTIME("Connected On", '%d %b %Y')) 
-                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-                    ) AS cumulative_count
-                FROM Connections
-                GROUP BY year, month
-                ORDER BY year, month'''
-    df = conn.sql(sql_str).df()
+    try:
+        conn = get_duckdb_connection()
+        sql_str = '''SELECT 
+                        YEAR(STRPTIME("Connected On", '%d %b %Y')) AS year, 
+                        MONTH(STRPTIME("Connected On", '%d %b %Y')) AS month, 
+                        COUNT(*) AS monthly_count,
+                        SUM(COUNT(*)) OVER (
+                            PARTITION BY YEAR(STRPTIME("Connected On", '%d %b %Y')) 
+                            ORDER BY MONTH(STRPTIME("Connected On", '%d %b %Y')) 
+                            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                        ) AS cumulative_count
+                    FROM Connections
+                    GROUP BY year, month
+                    ORDER BY year, month'''
+        df = conn.sql(sql_str).df()
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        df = None  # O un valore di fallback  
     return df
 
 def connections_progression_global(context_data):
@@ -89,20 +93,29 @@ def connections_progression_global(context_data):
     return df 
 
 def max_conn_prog_glb(conn_prog_glb):
-    conn = get_duckdb_connection()
-    sql_str= '''SELECT MAX(cumulative_count) FROM conn_prog_glb'''
-    return int(conn.sql(sql_str).fetchone()[0])
+    try:
+        conn = get_duckdb_connection()
+        sql_str= '''SELECT MAX(cumulative_count) FROM conn_prog_glb'''
+        n = int(conn.sql(sql_str).fetchone()[0])
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        n = 0  # O un valore di fallback
+    return n
 
 def create_comp_subset(context_data, n):
-    conn = get_duckdb_connection()
-    sql_str= f'''SELECT Company, count(*) as compcount FROM context_data where NOT Company is NULL group by Company order by compcount desc LIMIT {n}'''
-    df = conn.sql(sql_str).df()
-    sql_str =  f'''SELECT AVG(compcount) as average, STDDEV(compcount) as deviation FROM df'''
-    df_metriche = conn.sql(sql_str).df()
-    df['diff'] = df['compcount'] - df_metriche['average'][0]
-    df['compcountnorm'] = ((df['diff'] / df_metriche['deviation'][0]).round(0))
-    df['compcountnorm'] = df['compcountnorm'] * 5
-    df['compcountnorm'] = df['compcountnorm'].astype(int)
+    try:
+        conn = get_duckdb_connection()
+        sql_str= f'''SELECT Company, count(*) as compcount FROM context_data where NOT Company is NULL group by Company order by compcount desc LIMIT {n}'''
+        df = conn.sql(sql_str).df()
+        sql_str =  f'''SELECT AVG(compcount) as average, STDDEV(compcount) as deviation FROM df'''
+        df_metriche = conn.sql(sql_str).df()
+        df['diff'] = df['compcount'] - df_metriche['average'][0]
+        df['compcountnorm'] = ((df['diff'] / df_metriche['deviation'][0]).round(0))
+        df['compcountnorm'] = df['compcountnorm'] * 5
+        df['compcountnorm'] = df['compcountnorm'].astype(int)
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        df = None  # O un valore di fallback
     return df
 
 
