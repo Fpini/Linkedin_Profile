@@ -253,36 +253,31 @@ def crea_grafo(context_data):
                 G.nodes[company]['weight'] = row_ord['compcountnorm']
     return G
 
+@st.cache_data
 def company_connections_progression(context_data):
-    conn = get_duckdb_connection()
-    sql_str = '''SELECT 
-                    UPPER(Company) as COMPANY,
-                    YEAR(STRPTIME("Connected On", '%d %b %Y')) AS year, 
-                    MONTH(STRPTIME("Connected On", '%d %b %Y')) AS month, 
-                    COUNT(*) AS monthly_count,
-                    SUM(COUNT(*)) OVER (
-                        ORDER BY YEAR(STRPTIME("Connected On", '%d %b %Y')), 
-                                MONTH(STRPTIME("Connected On", '%d %b %Y')) 
-                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-                    ) AS cumulative_count
-                FROM Connections
-                where UPPER(Company) like '%BANCA%'
-                GROUP BY Company, year, month
-                ORDER BY year, month, Company;
-               '''
+    try:
+        conn = get_duckdb_connection()
+        sql_str = '''SELECT 
+                        UPPER(Company) as COMPANY,
+                        YEAR(STRPTIME("Connected On", '%d %b %Y')) AS year, 
+                        MONTH(STRPTIME("Connected On", '%d %b %Y')) AS month, 
+                        COUNT(*) AS monthly_count,
+                        SUM(COUNT(*)) OVER (
+                            ORDER BY YEAR(STRPTIME("Connected On", '%d %b %Y')), 
+                                    MONTH(STRPTIME("Connected On", '%d %b %Y')) 
+                            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                        ) AS cumulative_count
+                    FROM Connections
+                    where UPPER(Company) like '%BANCA%'
+                    GROUP BY Company, year, month
+                    ORDER BY year, month, Company;
+                '''
 
-    df = conn.sql(sql_str).df()
-    df["year_month"] = df["year"].astype(str) + "-" + df["month"].astype(str).str.zfill(2)
-        # Creiamo il grafico a barre con l'asse X=Anno-Mese, Y=Conteggio, Colore=Evento
-    fig = px.bar(df, 
-             x='year_month', 
-             y='monthly_count', 
-             color='COMPANY', 
-             title="Monthly Connections Count",
-             labels={'year_month': 'Year-Month', 'count': 'Connections Number'},
-             barmode='group')
-
-    # Mostra il grafico
-    st.plotly_chart(fig, key="company connections progression")
+        df = conn.sql(sql_str).df()
+        df["year_month"] = df["year"].astype(str) + "-" + df["month"].astype(str).str.zfill(2)
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        df = None  # O un valore di fallback
+    return df
 
 
