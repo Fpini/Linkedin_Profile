@@ -254,10 +254,11 @@ def crea_grafo(context_data):
     return G
 
 @st.cache_data
-def company_connections_progression(context_data):
+def company_connections_progression(context_data, user_input):
     try:
+        like_cond = f"'%{user_input.upper()}%'"
         conn = get_duckdb_connection()
-        sql_str = '''SELECT 
+        sql_str = f'''SELECT 
                         UPPER(Company) as COMPANY,
                         YEAR(STRPTIME("Connected On", '%d %b %Y')) AS year, 
                         MONTH(STRPTIME("Connected On", '%d %b %Y')) AS month, 
@@ -268,7 +269,7 @@ def company_connections_progression(context_data):
                             ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
                         ) AS cumulative_count
                     FROM Connections
-                    where UPPER(Company) like '%BANCA%'
+                    where UPPER(Company) like {like_cond}
                     GROUP BY Company, year, month
                     ORDER BY year, month, Company;
                 '''

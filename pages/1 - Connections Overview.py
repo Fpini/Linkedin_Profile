@@ -25,7 +25,7 @@ if "context_data" in st.session_state:
     if conn_prog_glb is not None:
         conn_prog_glb["year_month"] = conn_prog_glb["year"].astype(str) + "-" + conn_prog_glb["month"].astype(str).str.zfill(2)
         # Creazione del grafico con Plotly
-        fig = px.line(conn_prog_glb, x=conn_prog_glb.year_month, y="cumulative_count", title="Global Cumulative Progression")
+        fig = px.line(conn_prog_glb, x=conn_prog_glb.year_month, y="cumulative_count", title="Global Cumulative Growth")
         # Aggiunge il pulsante per resettare lo zoom
         fig.update_layout(modebar_add=["resetScale2d"])
         # Mostra il grafico in Streamlit
@@ -40,7 +40,7 @@ if "context_data" in st.session_state:
         fig = px.bar(conn_prog, 
                     x="year_month", 
                     y="monthly_count", 
-                    title="📊 Monthly Connections", 
+                    title="📊 Monthly Connections Growth", 
                     color="year_month",  # Cambia colore per ogni barra
                     text_auto=True)  # Mostra i valori sopra le barre
         # Personalizzazione del layout
