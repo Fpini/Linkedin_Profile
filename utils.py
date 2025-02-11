@@ -30,25 +30,47 @@ def process_csv_file(file):
         st.error(f"Errore durante la lettura del file: {e}")
         return None
     
+@st.cache_data
 def company_count(context_data):
-    conn = get_duckdb_connection()
-    cnt = conn.sql('''SELECT COUNT(DISTINCT Company) from Connections''').fetchone()[0]
+    try:
+        conn = get_duckdb_connection()
+        cnt = conn.sql('''SELECT COUNT(DISTINCT Company) from Connections''').fetchone()[0]
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        cnt = 0  # O un valore di fallback  
     return cnt
 
+@st.cache_data
 def position_count(context_data):
-    conn = get_duckdb_connection()
-    cnt = conn.sql('''SELECT COUNT(DISTINCT Position) from Connections''').fetchone()[0]
+    try:
+        conn = get_duckdb_connection()
+        cnt = conn.sql('''SELECT COUNT(DISTINCT Position) from Connections''').fetchone()[0]
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        cnt = 0  # O un valore di fallback  
     return cnt
 
+@st.cache_data
 def connections_per_company(context_data):
-    conn = get_duckdb_connection()
-    return conn.sql(f'''SELECT Company, count(*) as count_company from Connections group by all having count_company > 2 order by count_company desc ''').df()
-
-def connections_per_position(context_data):
-    conn = get_duckdb_connection()
-    df = conn.sql(f'''SELECT Position, count(*) as count_position from Connections group by all having count_position > 2 order by count_position desc''').df()
+    try:
+        conn = get_duckdb_connection()
+        df = conn.sql(f'''SELECT Company, count(*) as count_company from Connections group by all having count_company > 2 order by count_company desc ''').df()
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        df = None  # O un valore di fallback  
     return df
 
+@st.cache_data
+def connections_per_position(context_data):
+    try:
+        conn = get_duckdb_connection()
+        df = conn.sql(f'''SELECT Position, count(*) as count_position from Connections group by all having count_position > 2 order by count_position desc''').df()
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        df = None  # O un valore di fallback  
+    return df
+
+@st.cache_data
 def connections_progression(context_data):
     try:
         conn = get_duckdb_connection()
@@ -70,6 +92,7 @@ def connections_progression(context_data):
         df = None  # O un valore di fallback  
     return df
 
+@st.cache_data
 def connections_progression_global(context_data):
     try:
         conn = get_duckdb_connection()
@@ -92,6 +115,7 @@ def connections_progression_global(context_data):
         df = None  # O un valore di fallback
     return df 
 
+@st.cache_data
 def max_conn_prog_glb(conn_prog_glb):
     try:
         conn = get_duckdb_connection()
@@ -102,6 +126,7 @@ def max_conn_prog_glb(conn_prog_glb):
         n = 0  # O un valore di fallback
     return n
 
+@st.cache_data
 def create_comp_subset(context_data, n):
     try:
         conn = get_duckdb_connection()
