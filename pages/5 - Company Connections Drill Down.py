@@ -4,7 +4,7 @@ import duckdb
 import plotly.express as px
 
 st.set_page_config(
-    page_title="2. Company Linkedin Connections Drill Down",
+    page_title="5. Company Linkedin Connections Drill Down",
     page_icon="📄",
     layout="wide"
 )
@@ -22,8 +22,8 @@ if "context_data" in st.session_state:
     if st.button("Go") or st.session_state.submit_triggered:
         if user_input:
             df = company_connections_progression(context_data, user_input)
-                # Creiamo il grafico a barre con l'asse X=Anno-Mese, Y=Conteggio, Colore=Evento
             if df is not None:
+                # Creiamo il grafico a barre con l'asse X=Anno-Mese, Y=Conteggio, Colore=Evento
                 fig = px.bar(df, 
                         x='year_month', 
                         y='monthly_count', 

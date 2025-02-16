@@ -4,7 +4,27 @@ import pandas as pd
 import networkx as nx
 import plotly.graph_objects as go
 import plotly.express as px
+import streamlit.components.v1 as components
 
+def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    # 1. Elimina tutte le righe che hanno almeno un valore nullo
+    df_clean = df.dropna(axis=0)
+    # 2. Elimina le righe in cui, per almeno una colonna di tipo stringa,
+    #    la lunghezza del contenuto trimmato è inferiore alla lunghezza originale
+    def row_has_extra_spaces(row):
+        for val in row:
+            if isinstance(val, str):
+                # Se la lunghezza della stringa senza spazi iniziali/finali è minore,
+                # significa che c'erano spazi extra
+                if len(val.strip()) < len(val):
+                    return True
+        return False
+
+    # Applica la funzione su ogni riga e conserva quelle che non hanno spazi extra
+    mask = ~df_clean.apply(row_has_extra_spaces, axis=1)
+    df_clean = df_clean[mask]
+    
+    return df_clean
 
 def upload_file():
     return st.sidebar.file_uploader("Carica un file (CSV)", type=["csv"])
@@ -18,10 +38,11 @@ def get_duckdb_connection():
 @st.cache_data
 def process_csv_file(file):
     try:
+        filename = file.name
         conn = get_duckdb_connection()
-        a = conn.execute ('''CREATE TABLE Connections AS SELECT *
-                FROM read_csv('Connections.csv')''')
+        a = conn.execute (f'''CREATE TABLE Connections AS SELECT * FROM read_csv('{filename}')''')
         context_data = conn.sql('''select * from Connections''').df()
+        #context_data = clean_dataframe(context_data)
         if context_data.empty:
             st.error("Il file caricato è vuoto.")
             return None
@@ -34,7 +55,7 @@ def process_csv_file(file):
 def company_count(context_data):
     try:
         conn = get_duckdb_connection()
-        cnt = conn.sql('''SELECT COUNT(DISTINCT Company) from Connections''').fetchone()[0]
+        cnt = conn.sql('''SELECT COUNT(DISTINCT Company) from context_data''').fetchone()[0]
     except Exception as e:
         print(f"Errore catturato: {e}")
         cnt = 0  # O un valore di fallback  
@@ -44,7 +65,7 @@ def company_count(context_data):
 def position_count(context_data):
     try:
         conn = get_duckdb_connection()
-        cnt = conn.sql('''SELECT COUNT(DISTINCT Position) from Connections''').fetchone()[0]
+        cnt = conn.sql('''SELECT COUNT(DISTINCT Position) from context_data''').fetchone()[0]
     except Exception as e:
         print(f"Errore catturato: {e}")
         cnt = 0  # O un valore di fallback  
@@ -64,7 +85,7 @@ def connections_per_company(context_data):
 def connections_per_position(context_data):
     try:
         conn = get_duckdb_connection()
-        df = conn.sql(f'''SELECT Position, count(*) as count_position from Connections group by all having count_position > 2 order by count_position desc''').df()
+        df = conn.sql(f'''SELECT Position, count(*) as count_position from context_data group by all having count_position > 2 order by count_position desc''').df()
     except Exception as e:
         print(f"Errore catturato: {e}")
         df = None  # O un valore di fallback  
@@ -105,7 +126,7 @@ def connections_progression_global(context_data):
                                     MONTH(STRPTIME("Connected On", '%d %b %Y')) 
                             ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
                         ) AS cumulative_count
-                    FROM Connections
+                    FROM context_data
                     GROUP BY year, month
                     ORDER BY year, month;
                 '''
@@ -257,6 +278,7 @@ def crea_grafo(context_data):
 def company_connections_progression(context_data, user_input):
     try:
         like_cond = f"'%{user_input.upper()}%'"
+
         conn = get_duckdb_connection()
         sql_str = f'''SELECT 
                         UPPER(Company) as COMPANY,
@@ -268,7 +290,7 @@ def company_connections_progression(context_data, user_input):
                                     MONTH(STRPTIME("Connected On", '%d %b %Y')) 
                             ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
                         ) AS cumulative_count
-                    FROM Connections
+                    FROM context_data
                     where UPPER(Company) like {like_cond}
                     GROUP BY Company, year, month
                     ORDER BY year, month, Company;
@@ -281,4 +303,68 @@ def company_connections_progression(context_data, user_input):
         df = None  # O un valore di fallback
     return df
 
+@st.cache_data
+def connections_per_company(context_data):
+    try:
+        conn = get_duckdb_connection()
+        sql_str = f'''SELECT 
+                        UPPER(Company) as company,
+                        count(*) as con_per_comp
+                    FROM context_data
+                    GROUP BY UPPER(Company)
+                    ORDER BY con_per_comp desc;
+                '''
+        df = conn.sql(sql_str).df()
+    except Exception as e:
+        print(f"Errore catturato: {e}")
+        df = None  # O un valore di fallback
+    return df
 
+@st.cache_data
+def positions_per_company(context_data):
+    try:
+        conn = get_duckdb_connection()
+        sql_str = '''
+            SELECT
+                Company AS company,
+                Position as position,
+                COUNT(*) AS pos_per_comp
+            FROM context_data
+            where Company is not NULL and len(Company) > 1
+            GROUP BY Company, Position
+            HAVING pos_per_comp > 1
+            order by pos_per_comp desc
+        '''
+        df = conn.sql(sql_str).df()
+        df["company"] = df["company"].fillna("Unknown")
+        df["position"] = df["position"].fillna("Unknown")
+        #df["url"] = df["url"].fillna("Unknown")
+        #df = df[df["company"] > "."]
+        # Debugging: Mostra le colonne disponibili
+        st.write("Colonne disponibili nel DataFrame:", df.columns)
+
+
+        return df  # Ritorna il DataFrame per debugging
+    except Exception as e:
+        st.error(f"Errore catturato: {e}")
+        return None  # Fallback in caso di errore
+
+@st.cache_data
+def create_df_per_map(context_data):
+    # Rimuovere eventuali valori nulli prima di visualizzare la mappa
+    geo_df_clean = context_data.dropna(subset=["Latitude", "Longitude"])
+
+    geo_df_grouped = geo_df_clean.groupby(["Company", "Latitude","Longitude"]).size().reset_index(name="Count")
+
+    return geo_df_grouped
+
+@st.cache_data
+def create_df_per_map2(context_data):
+    # Rimuovere eventuali valori nulli prima di visualizzare la mappa
+    geo_df_clean = context_data.dropna(subset=["Latitude", "Longitude"])
+
+    geo_df_grouped = geo_df_clean.groupby(["Company", "Location", "Latitude","Longitude"]).size().reset_index(name="Count")
+
+    st.write(geo_df_grouped)
+
+    return geo_df_grouped

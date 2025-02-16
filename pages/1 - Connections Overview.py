@@ -38,11 +38,11 @@ if "context_data" in st.session_state:
         conn_prog["year_month"] = conn_prog["year"].astype(str) + "-" + conn_prog["month"].astype(str).str.zfill(2)
         # Creazione del grafico con colori personalizzati
         fig = px.bar(conn_prog, 
-                    x="year_month", 
+                    x="year", 
                     y="monthly_count", 
                     title="📊 Monthly Connections Growth", 
-                    color="year_month",  # Cambia colore per ogni barra
-                    text_auto=True)  # Mostra i valori sopra le barre
+                    color="month",  # Cambia colore per ogni barra
+                    text_auto=True,barmode="stack")  # Mostra i valori sopra le barre
         # Personalizzazione del layout
         fig.update_layout(
             xaxis_title="year_month",
@@ -61,19 +61,20 @@ if "context_data" in st.session_state:
     st.header(f'Total number of connections companies: {company_count}')
 #    value_comp = st.slider("Choose a value", min_value=1, max_value=company_count, value=10)
     conn_per_comp = connections_per_company(context_data)
+    conn_per_comp=conn_per_comp[conn_per_comp['con_per_comp']>2]
     # Creazione del grafico con colori personalizzati
     if conn_per_comp is not None:
         fig = px.bar(conn_per_comp, 
-                    x="Company", 
-                    y="count_company", 
-                    title="📊 Companies linked to more than 2 connections", 
-                    color="Company",  # Cambia colore per ogni barra
+                    x="company", 
+                    y="con_per_comp", 
+                    title="📊 Companies with more than 2 connections", 
+                    color="company",  # Cambia colore per ogni barra
                     text_auto=True)  # Mostra i valori sopra le barre
 
         # Personalizzazione del layout
         fig.update_layout(
-            xaxis_title="Company",
-            yaxis_title="count_company",
+            xaxis_title="company",
+            yaxis_title="con_per_comp",
             modebar_add=["resetScale2d"],
             xaxis=dict(
                 rangeslider=dict(visible=True)),
