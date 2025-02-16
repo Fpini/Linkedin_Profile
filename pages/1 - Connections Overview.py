@@ -15,14 +15,15 @@ if "context_data" in st.session_state:
     context_data = st.session_state["context_data"]
 #
 #  Total connections' number
-#     
+#    
+    st.write(context_data)
     conn_prog_glb = connections_progression_global(context_data)
-    total_connections = max_conn_prog_glb(conn_prog_glb)
-    st.header(f'Total number of connections: {total_connections}')
+    if conn_prog_glb is not None:
+        total_connections = max_conn_prog_glb(conn_prog_glb)
+        st.header(f'Total number of connections: {total_connections}')
 #
 #  Global period connections' trend
 #     
-    if conn_prog_glb is not None:
         conn_prog_glb["year_month"] = conn_prog_glb["year"].astype(str) + "-" + conn_prog_glb["month"].astype(str).str.zfill(2)
         # Creazione del grafico con Plotly
         fig = px.line(conn_prog_glb, x=conn_prog_glb.year_month, y="cumulative_count", title="Global Cumulative Growth")
