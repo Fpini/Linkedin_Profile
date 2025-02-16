@@ -1,8 +1,6 @@
 import streamlit as st
 from utils import upload_file, process_csv_file
 import duckdb
-#import subprocess
-import sys
 import time
 
 st.set_page_config(page_title="Home - Profilo Linkedin", page_icon="📄", layout="wide")
@@ -23,7 +21,6 @@ if file:
     if context_data is not None:
         st.session_state["context_data"] = context_data
         st.success("File caricato con successo!")
-        st.write(context_data)
     else:
         st.error("Errore durante l'elaborazione del file.")
 else:

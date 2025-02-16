@@ -365,6 +365,4 @@ def create_df_per_map2(context_data):
 
     geo_df_grouped = geo_df_clean.groupby(["Company", "Location", "Latitude","Longitude"]).size().reset_index(name="Count")
 
-    st.write(geo_df_grouped)
-
     return geo_df_grouped
