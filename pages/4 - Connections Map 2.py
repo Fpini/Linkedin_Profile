@@ -18,7 +18,7 @@ if "context_data" in st.session_state:
         #df = df_per_map.groupby(["Company", "Location", "Latitude","Longitude"]).size().reset_index(name="Count")
 
         # Imposta il tuo access token Mapbox
-        px.set_mapbox_access_token("pk.eyJ1IjoiZnBpbmkiLCJhIjoiY203N2ZzN3A5MDQ3czJqc2h2aHVmemU4bCJ9.Y51CADcs8wC70kIxfpI9XgOKEN")
+        px.set_mapbox_access_token("x")
 
         # Creare la mappa con Mapbox
         fig = px.scatter_mapbox(
