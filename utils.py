@@ -250,7 +250,6 @@ def visualizza_grafo(context_data):
             )
         )
         # Mostra il grafico
-#        fig.show()
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -366,3 +365,11 @@ def create_df_per_map2(context_data):
     geo_df_grouped = geo_df_clean.groupby(["Company", "Location", "Latitude","Longitude"]).size().reset_index(name="Count")
 
     return geo_df_grouped
+
+
+def company_advanced_search(df, selected_companies, additional_filter):
+    if len(selected_companies) >0 :
+        df = df[df["Company"].isin(selected_companies)]
+    if len(additional_filter) > 0 :
+        df = df[df["Position"].isin(additional_filter)]
+    return df

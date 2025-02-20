@@ -4,3 +4,5 @@ plotly
 networkx
 scipy
 geopy
+requests
+networkx

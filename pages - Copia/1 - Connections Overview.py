@@ -16,9 +16,8 @@ if "context_data" in st.session_state:
 #
 #  Total connections' number
 #    
-#    st.write(context_data)
+    st.write(context_data)
     conn_prog_glb = connections_progression_global(context_data)
-
     if conn_prog_glb is not None:
         total_connections = max_conn_prog_glb(conn_prog_glb)
         st.header(f'Total number of connections: {total_connections}')
